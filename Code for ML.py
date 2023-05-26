@@ -5,7 +5,7 @@
 
 # ## 1. import basic libraries
 
-# In[ ]:
+# In[65]:
 
 
 import pandas as pd
@@ -18,7 +18,7 @@ import requests
 
 # ## 1.a Downloading Data needed
 
-# In[ ]:
+# In[66]:
 
 
 repository_url = "https://raw.githubusercontent.com/stm5131/nsfcybertraining/main/Machine%20Learning%20-%20Friday%20Session/" 
@@ -39,42 +39,35 @@ for filename in files:
 
 # ## 2. read data
 
-# In[ ]:
+# In[67]:
 
 
+df_train = pd.read_csv('data_train.csv')
 
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
+print("length:",len(df_train))
+df_train.head()
 
 
 # ## 3. split data by feature and target
 
-# In[ ]:
+# In[68]:
 
 
+X=df_train.iloc[:,:26]
+X.head()
 
 
-
-# In[ ]:
-
+# In[69]:
 
 
+Y=df_train["location"]
+Y.head()
 
 
-# In[ ]:
+# In[70]:
 
 
-
+collections.Counter(Y)
 
 
 # In[ ]:
@@ -91,156 +84,173 @@ for filename in files:
 
 # ## 4. train KNN and decision tree model
 
-# In[ ]:
+# In[71]:
 
 
+from sklearn import tree, neighbors
 
 
-
-# In[ ]:
-
+# In[72]:
 
 
+model1=tree.DecisionTreeClassifier()
+model2=neighbors.KNeighborsClassifier(n_neighbors=1)
 
 
-# In[ ]:
+# In[73]:
 
 
-
+model1.fit(X,Y)
+model2.fit(X,Y)
 
 
 # ## 5. cross validate your training
 
-# In[ ]:
+# In[74]:
 
 
+from sklearn.model_selection import cross_validate
 
 
-
-# In[ ]:
-
+# In[75]:
 
 
+model1_cv=cross_validate(model1, X, Y, scoring='precision_macro', cv=5, return_train_score=False)
+model2_cv=cross_validate(model2, X, Y, scoring='precision_macro', cv=5, return_train_score=False)
 
 
-# In[ ]:
+# In[76]:
 
 
+model1_cv['test_score']
 
+
+# In[77]:
+
+
+print('decision tree', np.mean(model1_cv['test_score']))
+print('knn', np.mean(model2_cv['test_score']))
 
 
 # ## 6. tune KNN model
 
-# In[ ]:
+# In[78]:
 
 
+from sklearn.model_selection import GridSearchCV
 
 
-
-# In[ ]:
-
+# In[79]:
 
 
+parameters={'n_neighbors':range(1,1001,10)}
+model2_GS = GridSearchCV(model2, parameters, cv=5, scoring='precision_macro', return_train_score=False)
+model2_GS.fit(X,Y)
 
 
-# In[ ]:
+# In[80]:
 
 
+model2_GS.cv_results_['params']
 
 
-
-# In[ ]:
-
+# In[81]:
 
 
+model2_GS.cv_results_['mean_test_score']
 
 
-# In[ ]:
+# In[82]:
 
 
+plt.scatter(x=range(1,1001,10), y=model2_GS.cv_results_['mean_test_score'])
 
 
-
-# In[ ]:
-
+# In[83]:
 
 
+model2_GS.best_params_
 
 
-# In[ ]:
+# In[84]:
 
 
+model2_GS.best_score_
 
 
-
-# In[ ]:
-
+# In[85]:
 
 
+model2_GS.best_estimator_
 
 
 # ## 7. test your model
 
-# In[ ]:
+# In[86]:
 
 
+test=pd.read_csv('data_test.csv')
 
 
-
-# In[ ]:
-
+# In[95]:
 
 
+test.head()
 
 
-# In[ ]:
+# In[88]:
 
 
+len(test)
 
 
-
-# In[ ]:
-
+# In[89]:
 
 
+X_test=test.iloc[:,:26]
+Y_test=test['location']
 
 
 # ## 8. report your result
 
-# In[ ]:
+# In[90]:
 
 
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import confusion_matrix
 
 
-
-# In[ ]:
-
+# In[91]:
 
 
+original_model=model2.predict(X_test)
+tuned_model=model2_GS.predict(X_test)
 
 
-# In[ ]:
+# In[92]:
 
 
+print('original Knn', accuracy_score(Y_test, original_model))
 
 
-
-# In[ ]:
-
+# In[93]:
 
 
+cm=confusion_matrix(Y_test, original_model)
+print(cm)
 
 
-# In[ ]:
+# In[94]:
 
 
+print('Tuned Knn (k=391)', accuracy_score(Y_test, tuned_model))
 
 
-
-# In[ ]:
-
+# In[96]:
 
 
+cm=confusion_matrix(Y_test, tuned_model)
+print(cm)
 
 
 # In[ ]:
